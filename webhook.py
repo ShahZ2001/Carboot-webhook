@@ -6,17 +6,19 @@ app = Flask(__name__)
 def home():
     return "Chatbot Webhook Running!"
 
-@app.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['POST'])  # <-- ADDED THE DECORATOR
 def webhook():
-    req = request.get_json(force=True)  # Get JSON from Dialogflow request
+    data = request.get_json(force=True)  # Ensure JSON parsing
 
-    # Extract the intent name from the request
-    intent_name = req.get("queryResult", {}).get("intent", {}).get("displayName", "")
+    # Check if the request is from Dialogflow
+    intent_name = data.get("queryResult", {}).get("intent", {}).get("displayName", "")
 
-    # Define responses based on different intents
-    response_text = "Webhook received intent: " + intent_name
+    if intent_name:  # If coming from Dialogflow
+        response_text = "Webhook received intent: " + intent_name
+        return jsonify({"fulfillmentText": response_text})
 
-    return jsonify({"fulfillmentText": response_text})  # Return JSON response
+    # If it's not a Dialogflow request, just return the received data
+    return jsonify({"received": data}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
